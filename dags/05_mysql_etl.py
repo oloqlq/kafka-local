@@ -1,34 +1,37 @@
 '''
 - etl 간단하게 적용, 스마트팩토리상 온도 센서에 대한 ETL 처리, mysql 사용
 '''
-# 1. 모듈 가져오기
+
+#####################################################
+#                     패키지 호출                      #
+#####################################################
+# from airflow.providers.mysql.operators.mysql import MysqlOperator - 범용 SQL Operator로 대체
+# MySQLHook : Load 단계에서 활용
+
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 import logging
-# 추가분
-#from airflow.providers.mysql.operators.mysql import MysqlOperator
-# 범용 SQL Operator로 대체
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-# Load 처리시 sql에 전처리된 데이터를 밀어 넣을때 사용
 from airflow.providers.mysql.hooks.mysql import MySqlHook
-# 데이터
 import json
 import random
-import pandas as pd  # 소량의 데이터(데이터 규모)
+import pandas as pd
 import os
 
-# 2. 기본설정
-# 프로젝트 내부 폴더를 데이터용으로 (~/dags/data)지정
-# task 진행간 생성되는 파일을 동기화하도록 위치 지정 -> 향후 s3(데이터 레이크)로 대체 될수 있음
 
-# 도커 내부에 생성된 컨테이너 상 워커내의 airflow 상의 지정한 데이터 위치
+#####################################################
+#                       EXTRACT                     #
+#####################################################
+
+# 더미데이터 생성 - json.dump 저장
+# xCom을 통해서 task_trasnform로 로그 경로를 전달. (실제 데이터 전송은 지양할 것)
+
+
 DATA_PATH = '/opt/airflow/dags/data'
 os.makedirs(DATA_PATH, exist_ok=True)
 
 def _extract(**kwargs):
-    # 스마트팩토리에 설치된 오븐 온도 센서에서  데이터가 발생되면 데이터레이크(s3, 어딘가에 존재)에 쌓이고 있다
-    # 더미데이터 고려 구성 -> 1회성으로 10건 구성 [{}, {}, {}, ...]
     data = [
         {
             "sensor_id" : f"SENSOR_{i+1}", #장비 ID
@@ -37,53 +40,46 @@ def _extract(**kwargs):
             "status" : "on", #off
         } for i in range(10)    ]
     
-    # 더미 데이터를 파일로 저장 (로그파일처럼) -> json 형태
-# /opt/airflow/dags/data/sensor_data_DAG수행날짜.json
-# 실습 -> 위의 데이터를 위의 형식으로 저장하시오 ( json.dump(data, f) )
-
     file_path = f'{DATA_PATH}/sensor_data_{ kwargs['ds_nodash'] }.json'
     with open(file_path, 'w') as f:
         json.dump(data, f)
-
-
-    # xCom을 통해서 task_trasnform에게 전달. 로그의 경로를 전달하는 것, 실제 데이터를 전달하는 것은 지양한다.
     logging.info(f'추출된 로그 데이터 { file_path} ')
     return file_path
     pass
 
 
 
+#####################################################
+#                      TRANSFORM                    #
+#####################################################
 
+# 섭씨를 화씨로 일괄 처리 (1번에 n개의 센서에서 데이터가 전달)
+# 파생변수로 화씨 데이터 구성 (temperature_f) = (섭씨 * 9/5) + 32
+# 100도 미만 데이터만 추출 (필터링) - 100도 이상의 데이터는 이상치로 간주
+# XCom을 통해 전달된 데이터를 획득해온다.
+# 전처리데이터 csv 덤프 (s3 업로드 고려) - airflow가 aws에서 가동되면 s3로 저장됨.
+# CSV경로 XCOM을 통해 개시
 
 def _trasform(**kwargs):
-    # _extract에서 추출한 데이터를 XCom을 통해서 획득
-    # 이 데이터를 df(pandas 사용, 소량데이터)로 로드 -> 섭씨를 화씨로 일괄 처리(1번에 n개의 센서에서 데이터가 전달)
-    # 전처리된 내용은 csv로 덤프 (s3로 업로드 고려)
-    # 1. XCom을 통해 전달된 데이터를 획득해온다.
     ti = kwargs['ti']
     json_file_path = ti.xcom_pull(task_ids='extract')
-
     logging.info(f'전달받은 데이터 {json_file_path}')
 
     df = pd.read_json(json_file_path)
-
-    # 섭씨를 화씨로 일괄 처리 (1번에 n개의 센서에서 데이터가 전달)
-    # 1. 100도 미만 데이터만 추출 (필터링) - 100도 이상의 데이터는 이상치로 간주. pandas의 블리언 인덱싱 사용
     target_df = df[ df['temperature'] < 100 ].copy()
-
-    # 2. 파생변수로 화씨 데이터 구성 (temperature_f) = (섭씨 * 9/5) + 32
     target_df['temperature_f'] = (target_df['temperature'] * 9/5) + 32
 
-    # 전처리된 내용을 csv로 덤프 (s3로 업로드 고려)
-    # 파일명 준비 : /opt/airflow/dags/data/preprocessing_data_DAG수행날짜.csv
     file_path = f'{DATA_PATH}/preprocessing_data_{ kwargs['ds_nodash' ]}.csv'
-    target_df.to_csv( file_path, index=False) #인덱스 제외!
-    logging.info(f'전처리 후 csv저장 완료 {file_path}')   # airflow가 aws에서 가동되면 s3로 저장됨.
+    target_df.to_csv( file_path, index=False) 
 
-    # CSV경로 XCOM을 통해 개시
     return file_path
     pass
 
+
+
+#####################################################
+#                        LOAD                       #
+#####################################################
 
 
 def _load(**kwargs):
@@ -115,7 +111,17 @@ def _load(**kwargs):
     
     pass
 
-# 3. DAG 정의
+
+
+
+#####################################################
+#                     DAG Define                    #
+#####################################################
+
+# task 정의 - Extract, Transform, Load
+# 테이블 생성 : 첫 실행에서만 적용되게끔 IF NOT EXISTS로 구성
+# 대시보드에 admin>connectinos>하위에 사전 등록
+
 with DAG(
     dag_id      = "05_mysql_etl", 
     description = "etl 수행하여 mysql에 온도 센서 데이터 적제",
@@ -129,15 +135,9 @@ with DAG(
     catchup     = False,
     tags        = ['mysql', 'etl'],
 ) as dag:
-     # 4. task 정의
     task_create_table = SQLExecuteQueryOperator(
-        # 테이블 생성, if not exists를 사용하여 무조건 sql이 일단 수행되게 구성 
-        # -> 아니라면 fail 발생함(2회차부터)
-        # 최초는 생성, 존재하면 pass => if not exists
         task_id = "create_table",
-        # 연결정보
-        conn_id = "mysql_default", # 대시보드에 admin>connectinos>하위에 사전 등록
-        # sql
+        conn_id = "mysql_default", 
         sql = '''
             CREATE TABLE IF NOT EXISTS sensor_readings (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -162,6 +162,13 @@ with DAG(
         python_callable = _load
     )
 
-    # 5. 의존성 정의 -> 시나리오별 준비 
+
+
+
+#####################################################
+#                      의존성 정의                     #
+#####################################################
+
+    # 의존성 정의 -> 시나리오별 준비 
     # task_create_table >> task_extract >> task_trasform >> task_load
     task_create_table >> task_extract >> task_trasform >> task_load
