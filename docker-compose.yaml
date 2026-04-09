@@ -53,6 +53,10 @@ x-airflow-common:
   # build: .
   environment:
     &airflow-common-env
+  # 아래 내용 추가
+  # 대한민국/서울 시간대로 조정
+    TZ: 'Asia/Seoul'
+    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: 'Asia/Seoul'
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
