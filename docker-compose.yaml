@@ -291,23 +291,23 @@ services:
       airflow-init:
         condition: service_completed_successfully
 # mysql 서비스 추가
-mysql:
-  image: mysql:8.0
-  container_name: airflow-class-mysql
-  environment:
-    MYSQL_ROOT_PASSWORD: root
-    MYSQL_DATABASE: my_datawarehouse
-    MYSQL_USER: guest
-    MYSQL_PASSWORD: guest
-  ports:
+  mysql:
+    image: mysql:8.0
+    container_name: airflow-class-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: my_datawarehouse
+      MYSQL_USER: guest
+      MYSQL_PASSWORD: guest
+    ports:
     - "3306:3306"
-  volumes:
+    volumes:
     - mysql-db-volume:/var/lib/mysql
-  healthcheck:
-    test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-    interval: 10s
-    timeout: 5s
-    retries: 5
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres-db-volume:
