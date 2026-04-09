@@ -30,10 +30,17 @@ os.mkdir(DATA_PATH, exist_ok=True)
 
 # 3-1. 콜백함수 정의
 
+def _extract(**kwargs):
+    pass
+def _transform(**kwargs):
+    pass
+def _load(**kwargs):
+    pass
+
 # 2. DAG 정의
 with DAG(
     dag_id      = "05_mysql_etl", 
-    description = "DAG ETL 구현 실습",
+    description = "ETL 수행하여 mysql에 온도 센서 데이터 적재",
     default_args= {
         'owner'             : 'de_2team_manager',        
         'retries'           : 1,
@@ -42,20 +49,28 @@ with DAG(
     schedule_interval = '@daily',
     start_date  = datetime(2026,2,25),     
     catchup     = False,
-    tags        = ['', ''],
+    tags        = ['mysql', 'etl'],
 ) as dag:
     # 3. task 정의
+    task_create_table = MysqlOperator(
+        #최초는 생성, 존재하면 pass : if not exists
+        task_id = "create_table",
+        
+    )
     t1 = PythonOperator(
-        task_id = "extract"
+        task_id = "extract",
+        python_callable = _extract
     )
     t2 = PythonOperator(
         task_id = "transform",
+        python_callable = _transform
     )
     t3 = PythonOperator(
         task_id = "load",
+        python_callable = _load
     )
 
     # 4. 의존성 정의 -> 시나리오별 준비 
-    t1 >> t2 >> t3
+    task_create_table >> t1 >> t2 >> t3
 
     pass
