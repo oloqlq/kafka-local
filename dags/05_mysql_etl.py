@@ -62,6 +62,24 @@ def _trasform(**kwargs):
     json_file_path = ti.xcom_pull(task_ids='extract')
 
     logging.info(f'전달받은 데이터 {json_file_path}')
+
+    df = pd.read_json(json_file_path)
+
+    # 섭씨를 화씨로 일괄 처리 (1번에 n개의 센서에서 데이터가 전달)
+    # 1. 100도 미만 데이터만 추출 (필터링) - 100도 이상의 데이터는 이상치로 간주. pandas의 블리언 인덱싱 사용
+    target_df = df[ df['temperature'] < 100 ].copy()
+
+    # 2. 파생변수로 화씨 데이터 구성 (temperature_f) = (섭씨 * 9/5) + 32
+    target_df['temperature_f'] = (target_df['temperature'] * 9/5) + 32
+
+    # 전처리된 내용을 csv로 덤프 (s3로 업로드 고려)
+    # 파일명 준비 : /opt/airflow/dags/data/preprocessing_data_DAG수행날짜.csv
+    file_path = f'{DATA_PATH}/preprocessing_data_{ kwargs['ds_nodash' ]}.csv'
+    target_df.to_csv( file_path, index=False) #인덱스 제외!
+    logging.info(f'전처리 후 csv저장 완료 {file_path}')   # airflow가 aws에서 가동되면 s3로 저장됨.
+
+    # CSV경로 XCOM을 통해 개시
+    return file_path
     pass
 
 
