@@ -26,7 +26,7 @@ os.makedirs(DATA_PATH, exist_ok=True)
 # 전처리된 내용은 csv로 덤프 (s3로 업로드 고려)
 # 5. csv 경로 xcom을 통해서 개시
 
-def _trasform(**kwargs):
+def _transform(**kwargs):
     ti = kwargs['ti']
     json_file_path = ti.xcom_pull(task_ids='extract')
     logging.info(f'전달받은 데이터 {json_file_path}')
@@ -58,6 +58,6 @@ with DAG(
     tags        = ['transform', 'etl'],
 ) as dag:
     task_trasform   = PythonOperator(
-        task_id = "trasform",
+        task_id = "transform",
         python_callable = _trasform
     )

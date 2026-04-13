@@ -71,11 +71,14 @@ with DAG(
     # 다음 dag을 실행시키는 트리거 발동하는 역할
     task_trigger_transform_dag_run = TriggerDagRunOperator(
         task_id = "trigger_transform",
-        # 트리거 대상
-        # 전달할 데이터
-        # dag 수행시간 세팅
-        # 기타 설정
+        trigger_dag_id = "06_multi_dag_2step_transform",
+        conf ={
+            "json_path":"{{ task_instance.xcom_pull(task_ids='extract') }}"
+        },
+        reset_dag_run = True,
+        wait_for_completion = False # 타 DAG가 수행하라는 명령을 전달하면 대기 없이 바로 본 Task를 종료(비동기처리)
     )
+    
 
 
 #####################################################
