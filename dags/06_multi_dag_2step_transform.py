@@ -6,9 +6,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 import logging
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.providers.mysql.hooks.mysql import MySqlHook
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator 
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator # 핵심
 import json
 import random
 import pandas as pd
@@ -48,7 +46,7 @@ def _transform(**kwargs):
 
 
 with DAG(
-    dag_id      = "06_multi_dag_2step_trasform", 
+    dag_id      = "06_multi_dag_2step_transform", 
     description = "transform 전용 DAG",
     default_args= {
         'owner'             : 'de_2team_manager',        

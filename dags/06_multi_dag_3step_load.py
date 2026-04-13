@@ -29,9 +29,11 @@ os.makedirs(DATA_PATH, exist_ok=True)
 
 
 def _load(**kwargs):
-    ti = kwargs['ti']
-    csv_path = ti.xcom_pull(task_ids='trasform')
+    dag_run = kwargs['ti']
+    csv_path = dag_run.conf.get('csv_path')
+
     df = pd.read_csv(csv_path)
+    
     mysql_hook = MySqlHook(mysql_conn_id='mysql_default')
     conn       = mysql_hook.get_conn()
     try:
