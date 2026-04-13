@@ -8,6 +8,7 @@ from airflow.operators.python import PythonOperator
 import logging
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.mysql.hooks.mysql import MySqlHook
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator 
 import json
 import random
 import pandas as pd
@@ -24,11 +25,13 @@ os.makedirs(DATA_PATH, exist_ok=True)
 # _extract에서 추출한 데이터를 XCom을 통해서 획득 
 # 파생변수로 화씨 데이터 구성 (temperature_f) = (섭씨 * 9/5) + 32
 # 전처리된 내용은 csv로 덤프 (s3로 업로드 고려)
-# 5. csv 경로 xcom을 통해서 개시
+# csv 경로 xcom을 통해서 개시
+
 
 def _transform(**kwargs):
-    ti = kwargs['ti']
-    json_file_path = ti.xcom_pull(task_ids='extract')
+    dag_run = kwargs['ti']
+    json_file_path = dag_run.conf.get('json_path')
+
     logging.info(f'전달받은 데이터 {json_file_path}')
     df = pd.read_json( json_file_path )
     target_df = df[ df['temperature'] < 100 ].copy()    
@@ -57,7 +60,21 @@ with DAG(
     catchup     = False,
     tags        = ['transform', 'etl'],
 ) as dag:
-    task_trasform   = PythonOperator(
+    task_transform   = PythonOperator(
         task_id = "transform",
-        python_callable = _trasform
+        python_callable = _transform
     )
+    task_trigger_load_dag_run = TriggerDagRunOperator(
+        task_id = "trigger_load",
+        trigger_dag_id = "06_multi_dag_3step_load",
+        conf ={
+            "csv_path":"{{ task_instance.xcom_pull(task_ids='extract') }}"
+        },
+        reset_dag_run = True,
+        wait_for_completion = False
+    )
+
+#####################################################
+#                      의존성 정의                     #
+#####################################################
+    task_transform >> task_trigger_load_dag_run
