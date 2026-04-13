@@ -23,7 +23,6 @@ import os
 #####################################################
 #                       EXTRACT                     #
 #####################################################
-
 # 더미데이터 생성 - json.dump 저장
 # xCom을 통해서 task_trasnform로 로그 경로를 전달. (실제 데이터 전송은 지양할 것)
 
@@ -52,7 +51,6 @@ def _extract(**kwargs):
 #####################################################
 #                      TRANSFORM                    #
 #####################################################
-
 # 섭씨를 화씨로 일괄 처리 (1번에 n개의 센서에서 데이터가 전달)
 # 파생변수로 화씨 데이터 구성 (temperature_f) = (섭씨 * 9/5) + 32
 # 100도 미만 데이터만 추출 (필터링) - 100도 이상의 데이터는 이상치로 간주
@@ -80,10 +78,9 @@ def _trasform(**kwargs):
 #####################################################
 #                        LOAD                       #
 #####################################################
-
 # Workflow : .csv를 DataFrame으로 변환하여 MySQL로 적재
-# 1. .csv 경로 획득
-# 2. DataFrame 변환
+# 1. .csv 경로 획득 -> xcom을 통해 이전 task의 id를 이용하여 추출한다. - ti(task instance)가
+# 2. DataFrame 변환 : 소규모 데이터이므로 pandas로도 적절하다. 
 # 3. MySQL 연결 : MySqlHook
 # 4. 커서 획득
     # 4-1. insert 구문 사용
@@ -96,23 +93,39 @@ def _trasform(**kwargs):
 # 7. 전체를 try ~ except로 감싸기(I/O)
 
 def _load(**kwargs):
-    # 1~3
+    ti = kwargs['ti']
+    csv_path = ti.xcom_pull(task_ids='transform')
+    df = pd.read_csv(csv_path)
+
     mysql_hook = MySqlHook(mysql_conn_id='mysql_default')
-    conn       = mysql_hook.get_conn() # 커넥션 획득
-    # 7
+    conn       = mysql_hook.get_conn() # 커넥션 획득 - I/O 영향 있음 : 예외처리 필요. with문 .. 
     try:
-        # 4
-        with conn.cursor() as cursor:    
-            # 4-1
-            # 4-2    
- 
+        with conn.cursor() as cursor:
+            sql = '''
+                insert into sensor_readings
+                (sensor_id, timestamp. temperature_c, temperature_f)
+                values (%s, %s, %s, %s)
+
+            '''
+            params = [
+                ( data['sensor_id'], data['timestamp'],
+                  data['temperature_c'], data['temperature_f'] )
+                for _, data in df.iterrows()
+            ]
+            logging.info(f'입력할 데이터(파라미터) {params}')
+            cursor.executemany( sql, params )
+
+            conn.commit()
+            logging.info('mysql에 적재 완료')
             pass        
     except Exception as e:
+        logging.info(f'적재 오류: {e}')
         pass
     finally:
         # 5
         if conn:
             conn.close()
+            logging.info(f'mysql 연결 종료')
     
     pass
 
@@ -122,7 +135,6 @@ def _load(**kwargs):
 #####################################################
 #                     DAG Define                    #
 #####################################################
-
 # task 정의 - Extract, Transform, Load
 # 테이블 생성 : 첫 실행에서만 적용되게끔 IF NOT EXISTS로 구성
 # 대시보드에 admin>connectinos>하위에 사전 등록
@@ -173,7 +185,6 @@ with DAG(
 #####################################################
 #                      의존성 정의                     #
 #####################################################
-
     # 의존성 정의 -> 시나리오별 준비 
     # task_create_table >> task_extract >> task_trasform >> task_load
     task_create_table >> task_extract >> task_trasform >> task_load
