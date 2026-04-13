@@ -60,7 +60,7 @@ with DAG(
 ) as dag:
     task_transform   = PythonOperator(
         task_id = "transform",
-        python_callable = _trasform
+        python_callable = _transform
     )
 
     task_trigger_load_dag_run = TriggerDagRunOperator(
