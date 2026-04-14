@@ -11,6 +11,8 @@
     - 패키지 설치( 필요시 가상환경에서 수행)
         - pip install fastapi pydantic uvicorn
 '''
+
+
 # 1. 모듈 가져오기
 from fastapi import FastAPI    # 앱 자체 의미
 from pydantic import BaseModel # 해당 클레스를 상속->요청/응답 데이터 구조 정의
