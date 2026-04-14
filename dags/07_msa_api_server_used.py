@@ -16,8 +16,28 @@ API_URL = "http://127.0.0.1:8000/predict"
 
 # 4-4. 콜백함수 정의
 def _create_dummy_data(**kwargs):
-    pass
+    users = [
+        {'user_id':"C001", "income":5000, "loan_amt":2000},
+        {'user_id':"C002", "income":4000, "loan_amt":5000},
+        {'user_id':"C003", "income":3000, "loan_amt":1000},
+    ]
+    return users
+
 def _api_service_call(**kwargs):
+    ti          = kwargs['ti']
+    users_data  = ti.xcom_pull(task_ids='task_create_dummy_data')
+
+    try:
+        res = requests.post(API_URL, json=users_data)
+        #if res.raise_for_status() == 200
+        results = res.json()
+        logging.info(f'신용평가 결과 획득 {results}')
+        return results
+    except Exception as e:
+        logging.error(f'api 호출 실패 {e}')
+        raise
+
+
     pass
 def _load_users_credit(**kwargs):
     pass
@@ -32,8 +52,11 @@ with DAG(
         'owner'         : 'de_2team_manager',
         'retries'       : 1,
         'retry_delay'   : timedelta(minutes=1)
-    }
-
+    },
+    schedule_interval = '@daily',
+    start_date  = datetime(2026,2,25),     
+    catchup     = False,
+    tags        = ['msa', 'fastapi'],
 ) as dag:
     # 4. Task 정의
     # 4-1. 더미 데이터 준비
