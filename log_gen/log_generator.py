@@ -14,8 +14,6 @@ class LogGenerator:
   def __init__(self):
     pass
   # 로그 발생에 대한 빈도(인터벌), 규칙적(fixed), 불규칙적(random)
-  # self는 클레스 내부에서만 보이고, 
-  # 클레스 외부에서는 없다고 판단(1번인자 self 아님)
   def get_interval_time(self, mode, interval):
     '''
       로그 발생후 다음 로그 발생시까지 텀(slepp,대기)하는 간격 계산
@@ -24,8 +22,6 @@ class LogGenerator:
       return interval # 고정 주기로 로그 발생
     return random.uniform(0.1, interval*2) # 0.1 ~ 고정주기*2배 : 무작위성 부여
   
-  # 추후. 중복데이터, 불량데이터등등 발생 기능은 확장
-  # 도메인별 로그 발생 함수 -> 상세 도메인/샘플 참조 유리!!
   # 1. 금융 로그
   def finance(self):
     return {

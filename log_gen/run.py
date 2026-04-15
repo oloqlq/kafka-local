@@ -6,23 +6,33 @@ import time
 # 현재 워킹디렉토리에서 코드를 작동할때 경로
 from log_generator import LogGenerator
 
+def make_log( config ):
+  log_gen = LogGenerator()
+  log_gen_map = {
+    "finance":log_gen.finance, 
+    "factory":log_gen.factory,
+  }
 
-log_gen = LogGenerator()
+  print(f'{config["target_industry"]} 로그 생성 시작')
+  print('-'*50)
+  for i in range(config['total_count']): 
+    cur_func = log_gen_map.get( config['target_industry'] )
+    log  = cur_func()
+    log_json = json.dumps( log, ensure_ascii=False )
+    print( f'[Log-{i+1}] {log_json}')
+    time.sleep( log_gen.get_interval_time( config['mode'], config['interval'] ) )
+  print('-'*50)
 
-def make_one_log():
-   return json.dumps( log_gen.finance(), ensure_ascii=False )
-
-
-
-
-
-
+log_gen_g = LogGenerator()
+def make_one_log():  
+  return json.dumps( log_gen_g.finance(), ensure_ascii=False ) # dict -> str : 객체직렬화
+    
 if __name__ == '__main__':
     config = {
-       "target_industry":"finance", # finance, iot, ...., game_lol
-       "mode":"random", # random or fixed
-       "interval":1,    # 초단위
-       "total_count":10,# 생성 개수, 
-       "loop":False     # 무한대 생성, 작동
+       "target_industry":"finance", 
+       "mode":"random", 
+       "interval":1,   
+       "total_count":10,
+       "loop":False     
     }
     make_log( config )
