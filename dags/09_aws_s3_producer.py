@@ -35,13 +35,13 @@ with DAG(
     tags        = ['aws', 's3', 'producer'],
 ) as dag:
     # 4. Task 정의
-    task_create_dummy_data_csv = PythonOperator(
-        task_id = "task_create_dummy_data_csv",
+    task_create_dummy_data_csv = BashOperator(
+        task_id = "create_dummy_data_csv",
         bash_command = f'echo "id,timestamp,value\n1,$(date),100\n2,$(date),500" > {LOCAL_PATH}'
 
     )
     task_upload_to_s3 = LocalFilesystemToS3Operator(
-        task_id = "task_upload_to_s3",
+        task_id = "upload_to_s3",
         filename = LOCAL_PATH,  
         dest_key = S3_KEY,   
         dest_bucket = BUCKET_NAME,  
