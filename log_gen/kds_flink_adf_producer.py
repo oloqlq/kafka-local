@@ -54,6 +54,7 @@ try:
         data = gen_stock_data()
         print( f"전송전: {data}")
         kinesis.put_record(
+            # TODO : Flink stream명 수정
             StreamName = "de-ai-14-an1-kds-stock-input",
             Data = json.dumps( data ),
             PartitionKey = data['ticker']
