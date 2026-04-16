@@ -13,6 +13,7 @@ fake = Faker('ko_KR') #  한국어 설정
 class LogGenerator:
   def __init__(self):
     pass
+  
   # 로그 발생에 대한 빈도(인터벌), 규칙적(fixed), 불규칙적(random)
   def get_interval_time(self, mode, interval):
     '''
