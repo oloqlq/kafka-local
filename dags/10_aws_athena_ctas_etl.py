@@ -26,8 +26,8 @@ ATHENA_DB_NAME      = 'de-ai-14-an1-glue-db'
 SRC_TABLE           = 'athena_s3_data_tbl'
 TARGET_TABLE        = 'pass_student'
 
-S3_TARGET_LOG       = f's3://{BUCKET_NAME}/athena/tbl/{TARGET_TABLE}/'
-S3_QUERY_LOG_LOC    = f's3://{BUCKET_NAME}/athena/query_logs/'
+S3_TARGET_LOC  = f's3://{BUCKET_NAME}/athena/tbl/{TARGET_TABLE}/'
+S3_QUERY_LOG_LOC = f's3://{BUCKET_NAME}/athena/query_logs/'
 
 # 3. DAG 정의 
 with DAG(
@@ -68,16 +68,15 @@ with DAG(
     query = f'''
         CREATE TABLE {TARGET_TABLE}
         WITH (
-            format = 'PARQUET'
-            parquet_compression = 'GZIP'
-            external_location   = {S3_TARGET_LOG}
+            format = 'PARQUET',
+            parquet_compression = 'GZIP',
+            external_location   = '{S3_TARGET_LOC}'
         )
         AS
         SELECT id, name, score, created_at
         FROM {SRC_TABLE}
         WHERE score >= 90
         ORDER BY score DESC
-    
     '''
 
     task3 = AthenaOperator(
