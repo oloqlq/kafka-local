@@ -27,7 +27,7 @@ AWS_ACCESS_KEY = os.getenv('ACCESS_KEY')
 AWS_SECRET_KEY = os.getenv('SECRET_KEY')
 
 AWS_REGION = 'ap-northeast-1'
-KINESIS_DATA_STREAM_NAME = 'de-ai-14-an1-kdf-medallion-bronze-stream'
+KINESIS_DATA_STREAM_NAME = 'de-ai-14-ap1-kdf-medallion-bronze-stream'
 
 # 3. AWS연동-> Session설정 -> I/O
 try:
