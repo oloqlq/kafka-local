@@ -63,13 +63,13 @@ def gen_data(store_id):
       "event_time": current_utc_time,
       "source_ip": fake.ipv4(),
       "user_agent": fake.user_agent(),
-      "data": json.dumps({
+      "data": {
           "user_id": f"user_{random.randint(100, 999)}",
           "item_id": selected_item["item_id"],
           "price": selected_item["price"],
           "qty": qty,
           "store_id": store_id
-      }),
+      },
       "ingested_at": current_utc_time
   }
   return raw_log
