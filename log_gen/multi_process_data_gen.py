@@ -43,8 +43,6 @@ except Exception as e:
     print('AWS 연동 실패')
 
 
-
-
 # 데이터 더미 생성
 def gen_data(store_id):
   items = [
