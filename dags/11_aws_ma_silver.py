@@ -26,6 +26,7 @@ with DAG(
     tags                = ['aws', 'medallion', 'silver', 'athena', 'ctas'],
 
 ) as dag:
+    # 4. Task 정의
     drop_silver_task = AthenaOperator(
         task_id         = 'drop_silver_tbl',
         query           = 'drop table if exists {{ params.database_silver }}.{{ params.tbl_nm }};',
@@ -36,11 +37,11 @@ with DAG(
     ctas_silver_task = AthenaOperator(
         task_id         = 'ctas_silver',
         query           = '''
-            create table if not exists {{ params_database_silver }}.{{ params.tbl_nm }}
+            create table if not exists {{ params.database_silver }}.{{ params.tbl_nm }}
             with (
                 format              = 'PARQUET',
                 parquet_compression = 'SNAPPY',
-                external_location   = {{ params.silver_path }},
+                external_location   = '{{ params.silver_path }}',
                 partitioned_by      = ARRAY['dt', 'hr']
                 
             ) as
@@ -57,25 +58,27 @@ with DAG(
                 user_agent,
                 cast(year || '-' || month || '-' || day as VARCHAR) as dt,
                 hour as hr
-            from {{ params.DATABASE_BRONZE }}.raw_bronze_tbl
-            where   year    = {{ execution_date.format('YYYY') }}
-                and month   = {{ execution_date.format('MM') }}
-                and day     = {{ execution_date.format('DD') }}
-                and hour    = {{ execution_date.format('HH') }}
+            from {{ params.database_bronze }}.raw_bronze_tbl
+            where   year    = '{{ execution_date.format('YYYY') }}'
+                and month   = '{{ execution_date.format('MM') }}'
+                and day     = '{{ execution_date.format('DD') }}'
+                and hour    = '{{ execution_date.format('HH') }}'
         ''',
         database        = DATABASE_SILVER,
         params          = {
             'database_bronze':DATABASE_BRONZE, 
             'database_silver':DATABASE_SILVER, 
             'tbl_nm':SILVER_TBL_NAME,
-            'silver_path': ATHENA_RESULTS
-        } 
+            'silver_path': SILVER_S3_PATH
+        },
+        output_location = ATHENA_RESULTS
     )
 
-    # 4. Task 정의
+    
+    # 5. 의존성 정의
     drop_silver_task >> ctas_silver_task
 
 
 
 
-    # 5. 의존성 정의
+    
