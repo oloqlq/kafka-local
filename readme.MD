@@ -14,3 +14,14 @@ root@2d6461f5c379:/# cd /opt/kafka/bin
 root@2d6461f5c379:/opt/kafka/bin#
 '''
 
+
+# 토픽 생성
+'''
+> kafka-topics.sh --create --topic spacex --bootstrap-server 127.0.0.1:9092
+--partitions 1 --replication-factor 1
+'''
+
+# 토픽 전송
+'''
+> 
+'''
