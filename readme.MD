@@ -28,6 +28,12 @@ root@4527e52ba5f6:/# cd /opt/kafka/bin
 # 토픽 생성
 > kafka-topics.sh --create --topic spacex --bootstrap-server 127.0.0.1:9092 --partitions 1 --replication-factor 1
 
+# 토픽 전송(프로듀서)
+> kafka-console-producer.sh --topic spacex --bootstrap-server 127.0.0.1:9092
+
+# 컨슈머
+> kafka-console-consumer.sh --topic spacex --bootstrap-server 127.0.0.1:9092
+
 ```
 
 
@@ -119,3 +125,13 @@ VISUALIZE    :     OpenSearch (DB)      <---( Indexing & Search )---->  DASHBOAR
 
 
 - conf 구성 -> 규칙 기술
+```
+docker compose restart
+```
+
+- 컨슈머 가동
+```
+PS ...> docker exec -it kafka-local bash
+
+> ./opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --topic factory-json-topic --from-beginning
+```
