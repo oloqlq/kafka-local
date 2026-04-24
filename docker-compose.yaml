@@ -22,7 +22,7 @@ services:
     networks:
       - kafka-net
 
-  # 2. Fluent Bit
+  # 2. Fluent Bit -> C
   fluent-bit:
     image: fluent/fluent-bit:latest
     container_name: fluent-bit
@@ -34,7 +34,7 @@ services:
     networks:
       - kafka-net
 
-  # 3. Logstash
+  # 3. Logstash -> Java
   logstash:
     image: docker.elastic.co/logstash/logstash:8.12.0
     container_name: logstash
