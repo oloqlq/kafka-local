@@ -25,16 +25,12 @@ def generate_logs():
     # json 형태로 기록 : dict 직렬화 처리
     with open(f"{log_dir}/sensor_json.log", "a", encoding="utf-8") as f:  # "a" : append; 파일에 덧붙여서 쓰기 모드
         f.write( json.dumps(data) + "\n" )
-
-
-    # text 형태로 기록 -> f-string구성    ./sensor_logs/sensor_text.log
+    # text 형태로 기록 -> f-string구성
     text = f"[{ data["timestamp"] }] ID={data["sensor_id"]} |     TEMP:{data["temperature"]} |   HUMI:{data["humidity"]} |    STAT:{data["status"]}"
     with open(f"{log_dir}/sensor_text.log", "a", encoding="utf-8") as f:
         f.write(json.dumps(text) + "\n")
     
     print(f"로그발생완료 {data["timestamp"]}")
-
-    pass
 
 # 4. 로그발생기 가동
 def main():
