@@ -176,7 +176,7 @@ PS ...> docker exec -it kafka-local bash
             tasks.max: 1 (데이터량이 많으면 숫자를 늘려 병렬 처리 가능)
             topics: factory-json-topic,factory-text-topic (구독할 토픽들)
             region: ap-northeast-2 (AWS 리전)
-            aws.kinesis.firehose.delivery.stream: 자신의_파이어호스_스트림_이름
+            aws.kinesis.firehose.delivery.stream: de-ai-14-ap1-kafka 
             value.converter: org.apache.kafka.connect.json.JsonConverter
             value.converter.schemas.enable: false
         ```

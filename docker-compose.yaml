@@ -85,9 +85,6 @@ services:
     networks:
       - kafka-net
 
-
-
-
   # 5. Kafka UI (모니터링, 관리)
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -108,3 +105,4 @@ services:
 networks:
   kafka-net:
     driver: bridge
+
