@@ -141,3 +141,17 @@ PS ...> docker exec -it kafka-local bash
 
 ```
 
+
+
+# 로그 형태
+- 참고
+    - 최초 데이터 => fluent-bit/logstash => 데이터 형태가 노이즈 많음! (프로토콜 때문에 추가된 내용이 많음) : 필터역할 필요
+    - 필터 보정하는 내용 업데이트 (추후)
+
+# kafka 대시보드
+- kafka ui
+- 메시지 흐름, connect를 통해 전달이 잘 되는지 등 모니터링
+
+
+# 로컬 -> 클라우드 연결
+kafka connect
