@@ -9,7 +9,7 @@ import datetime
 import os
 
 # 2. 로그 저장 디렉토리 생성
-log_dir = './sensor/logs'
+log_dir = './sensor_logs'
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 

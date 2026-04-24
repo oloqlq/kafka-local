@@ -133,5 +133,11 @@ docker compose restart
 ```
 PS ...> docker exec -it kafka-local bash
 
+#json
 > ./opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --topic factory-json-topic --from-beginning
+
+#text
+> ./opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --topic factory-text-topic --from-beginning
+
 ```
+
